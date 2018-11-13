@@ -3,64 +3,65 @@ package br.com.ractecnologia.springbootessentials.controller;
 
 import br.com.ractecnologia.springbootessentials.error.CustomErrorType;
 import br.com.ractecnologia.springbootessentials.model.Student;
-import br.com.ractecnologia.springbootessentials.util.DateUtil;
+import br.com.ractecnologia.springbootessentials.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("students")
 public class StudentController {
 
 
-    private DateUtil dateUtil;
+    private final StudentRepository studentDao;
 
     @Autowired
-    public StudentController(DateUtil dateUtil) {
-        this.dateUtil = dateUtil;
+    public StudentController(StudentRepository studentDao) {
+        this.studentDao = studentDao;
     }
 
     @GetMapping
     public ResponseEntity<?> listAll() {
 
-        return new ResponseEntity<>(Student.studentList, HttpStatus.OK);
+        return new ResponseEntity<>(studentDao.findAll(), HttpStatus.OK);
     }
 
     @GetMapping(path = "/{id}")
-    public ResponseEntity<?> getStudentById(@PathVariable("id") int id) {
-        Student student = new Student();
-        student.setId(id);
-        int index = Student.studentList.indexOf(student);
+    public ResponseEntity<?> getStudentById(@PathVariable("id") Long id) {
+        Optional<Student> studentOptional = studentDao.findById(id);
 
-        if (index == -1) {
-            return new ResponseEntity<>(new CustomErrorType("Students not found"), HttpStatus.NOT_FOUND);
+        if (studentOptional.isPresent()) {
+            return new ResponseEntity<>(studentOptional.get(), HttpStatus.ACCEPTED);
+
         }
+        return new ResponseEntity<>(new CustomErrorType("Students not found"), HttpStatus.NOT_FOUND);
 
-        return new ResponseEntity<>(Student.studentList.get(index), HttpStatus.ACCEPTED);
     }
 
     @PostMapping
     public ResponseEntity<?> save(@RequestBody Student student) {
-        Student.studentList.add(student);
-        return new ResponseEntity<>(student, HttpStatus.OK);
+            Student student1 = studentDao.save(student);
+        return new ResponseEntity<>(student1, HttpStatus.CREATED);
 
 
     }
 
     @DeleteMapping
     public ResponseEntity<?> delete(@RequestBody Student student) {
-        Student.studentList.remove(student);
-        return new ResponseEntity<>(student, HttpStatus.OK);
+        studentDao.delete(student);
+        return new ResponseEntity<>(student, HttpStatus.NO_CONTENT);
 
 
     }
 
     @PutMapping
     public ResponseEntity<?> update(@RequestBody Student student) {
-        Student.studentList.remove(student);
-        Student.studentList.add(student);
-        return new ResponseEntity<>(student, HttpStatus.OK);
+        studentDao.save(student);
+        return new ResponseEntity<>(student, HttpStatus.NO_CONTENT);
 
 
     }
