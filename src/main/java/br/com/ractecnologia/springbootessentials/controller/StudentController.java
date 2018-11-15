@@ -2,6 +2,7 @@ package br.com.ractecnologia.springbootessentials.controller;
 
 
 import br.com.ractecnologia.springbootessentials.error.CustomErrorType;
+import br.com.ractecnologia.springbootessentials.error.ResourceNotFoundException;
 import br.com.ractecnologia.springbootessentials.model.Student;
 import br.com.ractecnologia.springbootessentials.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,13 +33,9 @@ public class StudentController {
 
     @GetMapping(path = "/{id}")
     public ResponseEntity<?> getStudentById(@PathVariable("id") Long id) {
+        verifyIfStudentsExists(id);
         Optional<Student> studentOptional = studentDao.findById(id);
-
-        if (studentOptional.isPresent()) {
-            return new ResponseEntity<>(studentOptional.get(), HttpStatus.ACCEPTED);
-
-        }
-        return new ResponseEntity<>(new CustomErrorType("Students not found"), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(studentOptional.get(), HttpStatus.ACCEPTED);
 
     }
 
@@ -53,11 +50,11 @@ public class StudentController {
         Student student1 = studentDao.save(student);
         return new ResponseEntity<>(student1, HttpStatus.CREATED);
 
-
     }
 
     @DeleteMapping
     public ResponseEntity<?> delete(@RequestBody Student student) {
+        verifyIfStudentsExists(student.getId());
         studentDao.delete(student);
         return new ResponseEntity<>(student, HttpStatus.NO_CONTENT);
 
@@ -66,9 +63,19 @@ public class StudentController {
 
     @PutMapping
     public ResponseEntity<?> update(@RequestBody Student student) {
+        verifyIfStudentsExists(student.getId());
         studentDao.save(student);
         return new ResponseEntity<>(student, HttpStatus.NO_CONTENT);
 
+
+    }
+
+    private void verifyIfStudentsExists(Long id) {
+
+        if (!studentDao.findById(id).isPresent()) {
+            throw new ResourceNotFoundException("Student not found for id: " + id);
+
+        }
 
     }
 
