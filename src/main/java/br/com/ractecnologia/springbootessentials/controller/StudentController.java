@@ -1,18 +1,17 @@
 package br.com.ractecnologia.springbootessentials.controller;
 
 
-import br.com.ractecnologia.springbootessentials.error.CustomErrorType;
 import br.com.ractecnologia.springbootessentials.error.ResourceNotFoundException;
 import br.com.ractecnologia.springbootessentials.model.Student;
 import br.com.ractecnologia.springbootessentials.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("students")
@@ -27,16 +26,15 @@ public class StudentController {
     }
 
     @GetMapping
-    public ResponseEntity<?> listAll() {
-
-        return new ResponseEntity<>(studentDao.findAll(), HttpStatus.OK);
+    public ResponseEntity<?> listAll(Pageable pageable) {
+        return new ResponseEntity<>(studentDao.findAll(pageable), HttpStatus.OK);
     }
 
     @GetMapping(path = "/{id}")
     public ResponseEntity<?> getStudentById(@PathVariable("id") Long id) {
         verifyIfStudentsExists(id);
-        Optional<Student> studentOptional = studentDao.findById(id);
-        return new ResponseEntity<>(studentOptional.get(), HttpStatus.ACCEPTED);
+        Student student = studentDao.findOne(id);
+        return new ResponseEntity<>(student, HttpStatus.ACCEPTED);
 
     }
 
@@ -54,12 +52,11 @@ public class StudentController {
     }
 
     @DeleteMapping
+    @PreAuthorize("hasRole('ADMIN') ")
     public ResponseEntity<?> delete(@RequestBody Student student) {
         verifyIfStudentsExists(student.getId());
         studentDao.delete(student);
         return new ResponseEntity<>(student, HttpStatus.NO_CONTENT);
-
-
     }
 
     @PutMapping
@@ -67,13 +64,11 @@ public class StudentController {
         verifyIfStudentsExists(student.getId());
         studentDao.save(student);
         return new ResponseEntity<>(student, HttpStatus.NO_CONTENT);
-
-
     }
 
     private void verifyIfStudentsExists(Long id) {
 
-        if (!studentDao.findById(id).isPresent()) {
+        if (studentDao.findOne(id) == null) {
             throw new ResourceNotFoundException("Student not found for id: " + id);
 
         }
