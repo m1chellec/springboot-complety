@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping("students")
+@RequestMapping("v1")
 public class StudentController {
 
 
@@ -25,12 +25,12 @@ public class StudentController {
         this.studentDao = studentDao;
     }
 
-    @GetMapping
+    @GetMapping(path = "/protected/students")
     public ResponseEntity<?> listAll(Pageable pageable) {
         return new ResponseEntity<>(studentDao.findAll(pageable), HttpStatus.OK);
     }
 
-    @GetMapping(path = "/{id}")
+    @GetMapping(path = "/protected/students/{id}")
     public ResponseEntity<?> getStudentById(@PathVariable("id") Long id) {
         verifyIfStudentsExists(id);
         Student student = studentDao.findOne(id);
@@ -38,28 +38,28 @@ public class StudentController {
 
     }
 
-    @GetMapping(path = "/findByName/{name}")
+    @GetMapping(path = "/protected/students/findByName/{name}")
     public ResponseEntity<?> findStudentsByName(@PathVariable String name) {
         return new ResponseEntity<>(studentDao.findByNameIgnoreCaseContaining(name), HttpStatus.OK);
 
     }
 
-    @PostMapping
+    @PostMapping(path = "/admin/students")
     public ResponseEntity<?> save(@Valid @RequestBody Student student) {
         Student student1 = studentDao.save(student);
         return new ResponseEntity<>(student1, HttpStatus.CREATED);
 
     }
 
-    @DeleteMapping
-    @PreAuthorize("hasRole('ADMIN') ")
-    public ResponseEntity<?> delete(@RequestBody Student student) {
-        verifyIfStudentsExists(student.getId());
-        studentDao.delete(student);
-        return new ResponseEntity<>(student, HttpStatus.NO_CONTENT);
+    @DeleteMapping(path = "/admin/students/{id}")
+   // @PreAuthorize("hasRole('ADMIN') ")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        verifyIfStudentsExists(id);
+        studentDao.delete(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PutMapping
+    @PutMapping(path = "/admin/students")
     public ResponseEntity<?> update(@RequestBody Student student) {
         verifyIfStudentsExists(student.getId());
         studentDao.save(student);
