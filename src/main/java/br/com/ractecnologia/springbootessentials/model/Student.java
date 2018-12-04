@@ -22,4 +22,12 @@ public class Student extends AbstractEntity {
     public String getEmail() {
         return email;
     }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                '}';
+    }
 }
